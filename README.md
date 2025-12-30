@@ -4,35 +4,161 @@ A production-ready, intelligent customer support system built with **Amazon Bedr
 
 ## 🏗️ Architecture Overview
 
+### Amazon Bedrock AgentCore Features
+
+This system leverages **5 core AgentCore services**:
+
+1. **AgentCore Runtime** ⚙️
+   - Hosts the Supervisor Agent in a managed container environment
+   - Provides HTTP endpoint (`/invocations`) for agent invocations
+   - Automatic scaling, session management, and lifecycle handling
+   - Network configuration: Public access with HTTP protocol
+   - Observability: Enabled for CloudWatch logs and metrics
+
+2. **AgentCore Memory** 🧠
+   - **Mode**: `STM_AND_LTM` (Short-Term + Long-Term Memory)
+   - **STM (Short-Term Memory)**: Session-level context, cleared when session ends
+   - **LTM (Long-Term Memory)**: Persistent user context across sessions
+   - **Expiry**: 30 days for LTM events
+   - **Memory ID**: `customer_support_supervisor_mem-SalHj92SVh`
+   - Automatic memory management via `user_id` for cross-session persistence
+
+3. **AgentCore Gateway** 🌐
+   - **Protocol**: MCP (Model Context Protocol)
+   - **Purpose**: Exposes AWS Lambda functions as MCP tools for agents
+   - **Authentication**: Cognito JWT (OAuth 2.0) with custom JWT authorizer
+   - **Gateway Targets**: 7 tools across 4 Lambda functions
+     - `sentiment_analysis` → `___sent` tool
+     - `knowledge_search` → `___search` tool
+     - `knowledge_ingestion` → `___ingest` tool
+     - `ticket_management` → 4 tools: `create_ticket`, `get_ticket`, `update_ticket`, `list_tickets`
+   - **Credential Provider**: Gateway IAM role for Lambda invocation
+
+4. **AgentCore Identity** 🔐
+   - **Provider**: Amazon Cognito (OAuth 2.0)
+   - **Authentication**: OAuth with JWT tokens
+   - **Scopes**: `openid`, `email`, `profile`
+   - **Discovery URL**: Cognito OpenID Connect discovery endpoint
+   - **Client ID**: Cognito User Pool client ID
+   - **Integration**: Runtime uses Cognito for user authentication and authorization
+
+5. **AgentCore Observability** 📊
+   - **Status**: Enabled
+   - **Logging**: CloudWatch Logs integration
+   - **Metrics**: Runtime performance and invocation metrics
+   - **Tracing**: Distributed tracing support
+   - **Monitoring**: Real-time agent status and health checks
+
 ### Core Components
 - **AgentCore Runtime** - Supervisor agent with memory and identity
-- **A2A Protocol** - Agent-to-agent communication
-- **MCP Gateway** - Lambda function integration
+- **A2A Protocol** - Agent-to-agent communication (Strands Agents)
+- **MCP Gateway** - Lambda function integration via AgentCore Gateway
 - **Bedrock Models** - Configurable AI models (default: Claude Haiku)
 - **S3 Vector Storage** - Knowledge base with embeddings
-- **Cognito Authentication** - OAuth and JWT support
-- **Lambda Functions** - Sentiment analysis, knowledge search, ML classification
+- **Cognito Authentication** - OAuth and JWT support (integrated with AgentCore Identity)
+- **Lambda Functions** - Sentiment analysis, knowledge search, ticket management
 
-### Multi-Agent System
+### Multi-Agent System Architecture
+
 ```
-Customer Request → Supervisor Agent (AgentCore)
-                      ↓
-    ┌─────────────────────────────────────────────────────┐
-    │  SentimentAgent (9001): Emotion analysis & urgency │
-    │  KnowledgeAgent (9002): S3 vector search & solutions│
-    │  TicketAgent (9003): Lifecycle management & tracking│
-    │  ResolutionAgent (9005): Personalized responses    │
-    │  EscalationAgent (9006): Human-in-the-loop escalation│
-    └─────────────────────────────────────────────────────┘
-                      ↓
-              Lambda Functions (MCP)
-    ┌─────────────────────────────────────────────────────┐
-    │  sentiment_analysis: Amazon Comprehend integration  │
-    │  knowledge_search: S3 vector embeddings search     │
-    │  ticket_management: CRUD operations for tickets   │
-    │  knowledge_ingestion: Article management (admin)   │
-    └─────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────┐
+│                         Customer Request                                 │
+│                    (UI / API / Direct Invocation)                        │
+└──────────────────────────────┬──────────────────────────────────────────┘
+                               │
+                               ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│              AgentCore Runtime (Supervisor Agent)                        │
+│  ┌──────────────────────────────────────────────────────────────────┐   │
+│  │ • BedrockAgentCoreApp (HTTP endpoint: /invocations)             │   │
+│  │ • Memory: STM_AND_LTM (30-day LTM expiry)                       │   │
+│  │ • Identity: Cognito OAuth 2.0                                    │   │
+│  │ • Observability: CloudWatch logs & metrics                        │   │
+│  └──────────────────────────────────────────────────────────────────┘   │
+└──────────────────────────────┬──────────────────────────────────────────┘
+                               │
+                               │ A2A Protocol (Agent-to-Agent)
+                               │
+        ┌──────────────────────┼──────────────────────┐
+        │                      │                      │
+        ▼                      ▼                      ▼
+┌───────────────┐    ┌───────────────┐    ┌───────────────┐
+│ SentimentAgent│    │KnowledgeAgent  │    │  TicketAgent  │
+│  (Port 9001)  │    │  (Port 9002)  │    │  (Port 9003)  │
+│               │    │               │    │               │
+│ • Emotion     │    │ • S3 Vector   │    │ • CRUD Ops    │
+│ • Urgency     │    │ • Search      │    │ • Lifecycle   │
+└───────┬───────┘    └───────┬───────┘    └───────┬───────┘
+        │                    │                    │
+        ▼                    ▼                    ▼
+┌───────────────┐    ┌───────────────┐    ┌───────────────┐
+│ResolutionAgent│    │EscalationAgent │    │  (Future)     │
+│  (Port 9005)  │    │  (Port 9006)  │    │               │
+│               │    │               │    │               │
+│ • Responses  │    │ • Escalation  │    │               │
+└───────┬───────┘    └───────┬───────┘    └───────────────┘
+        │                    │
+        └────────────────────┘
+                    │
+                    ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                    AgentCore Gateway (MCP Protocol)                     │
+│  ┌──────────────────────────────────────────────────────────────────┐  │
+│  │ • Authentication: Cognito JWT (OAuth 2.0)                         │  │
+│  │ • Protocol: MCP (Model Context Protocol)                          │  │
+│  │ • Gateway Targets: 7 tools across 4 Lambda functions             │  │
+│  └──────────────────────────────────────────────────────────────────┘  │
+└──────────────────────────────┬──────────────────────────────────────────┘
+                               │
+                               │ MCP Tool Invocation
+                               │
+        ┌──────────────────────┼──────────────────────┐
+        │                      │                      │
+        ▼                      ▼                      ▼
+┌───────────────┐    ┌───────────────┐    ┌───────────────┐
+│ sentiment_    │    │ knowledge_    │    │ ticket_       │
+│ analysis      │    │ search        │    │ management    │
+│               │    │               │    │               │
+│ Tool: ___sent │    │ Tool: ___search│   │ Tools:        │
+│               │    │               │    │ • create_ticket│
+│ • Comprehend  │    │ • S3 Vector   │    │ • get_ticket  │
+│ • Sentiment   │    │ • Embeddings  │    │ • update_ticket│
+└───────┬───────┘    └───────┬───────┘    │ • list_tickets│
+        │                    │            └───────┬───────┘
+        │                    │                    │
+        └────────────────────┼────────────────────┘
+                             │
+                             ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                         AWS Services                                    │
+│  ┌──────────────────────────────────────────────────────────────────┐  │
+│  │ • DynamoDB: tickets, customers, feedback tables                   │  │
+│  │ • S3: Knowledge base storage, vector embeddings                   │  │
+│  │ • Cognito: User authentication & authorization                     │  │
+│  │ • CloudWatch: Logs, metrics, observability                       │  │
+│  │ • SSM Parameter Store: Configuration & secrets                    │  │
+│  └──────────────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────────┘
 ```
+
+### Infrastructure Components
+
+**AgentCore Services:**
+- **Runtime**: Containerized Supervisor Agent with HTTP endpoint
+- **Memory**: STM_AND_LTM memory instance (Memory ID: `customer_support_supervisor_mem-SalHj92SVh`)
+- **Gateway**: MCP Gateway with Cognito JWT authentication
+- **Identity**: Cognito OAuth 2.0 integration
+- **Observability**: CloudWatch integration enabled
+
+**AWS Infrastructure:**
+- **DynamoDB**: 3 tables (tickets, customers, feedback)
+- **S3**: 2 buckets (knowledge base, vector storage)
+- **Lambda**: 4 functions (sentiment_analysis, knowledge_search, ticket_management, knowledge_ingestion)
+- **Cognito**: User Pool with OAuth 2.0, JWT support, M2M client
+- **IAM**: Execution roles, Gateway roles, Lambda permissions
+- **SSM Parameter Store**: Gateway URL, Cognito credentials, configuration
+- **ECR**: Container registry for AgentCore Runtime images
+- **CloudWatch**: Logs, metrics, and distributed tracing
 
 ## 🚀 Quick Start for New Developers
 
@@ -98,13 +224,25 @@ cd ../..
 ```
 
 **What gets deployed:**
-- DynamoDB tables (tickets, customers, feedback)
-- S3 buckets (knowledge base, vector storage)
-- Lambda functions (sentiment analysis, knowledge search, ticket management)
-- Cognito User Pool (authentication)
-- AgentCore Gateway (MCP Gateway for Lambda integration)
-- IAM roles and policies
-- SSM Parameter Store (for Gateway URL and Cognito credentials)
+
+**AWS Infrastructure:**
+- **DynamoDB Tables**: `tickets`, `customers`, `feedback`
+- **S3 Buckets**: Knowledge base storage, vector embeddings storage
+- **Lambda Functions**: 
+  - `sentiment_analysis` - Amazon Comprehend integration
+  - `knowledge_search` - S3 Vector search
+  - `ticket_management` - CRUD operations (4 tools: create, get, update, list)
+  - `knowledge_ingestion` - Article management (admin)
+- **Cognito User Pool**: OAuth 2.0 authentication with JWT support
+- **IAM Roles & Policies**: Execution roles, Gateway roles, Lambda permissions
+- **SSM Parameter Store**: Gateway URL, Cognito credentials, configuration
+
+**AgentCore Resources:**
+- **AgentCore Runtime**: Supervisor agent deployment
+- **AgentCore Memory**: STM_AND_LTM memory instance
+- **AgentCore Gateway**: MCP Gateway with 7 tool targets
+- **AgentCore Identity**: Cognito OAuth integration
+- **ECR Repository**: Container image storage for Runtime
 
 ### Step 4: Update Configuration and Initialize Knowledge Base
 
@@ -131,10 +269,13 @@ agentcore status
 ```
 
 **What gets deployed:**
-- Supervisor agent with memory (STM_AND_LTM)
-- HTTP endpoint at `/invocations`
-- Session management enabled
-- MCP tools integration
+- **AgentCore Runtime**: Supervisor agent containerized deployment
+- **Memory**: STM_AND_LTM memory instance (30-day LTM expiry)
+- **HTTP Endpoint**: `/invocations` endpoint for agent invocations
+- **Session Management**: Automatic via `runtimeSessionId` (33+ character UUIDs)
+- **MCP Tools Integration**: 7 tools via AgentCore Gateway
+- **Identity**: Cognito OAuth 2.0 authentication
+- **Observability**: CloudWatch logs and metrics enabled
 
 ### Step 6: Test the System
 
@@ -318,21 +459,50 @@ curl -X POST http://localhost:8081/invocations \
   - `runtimeSessionId`: AgentCore session ID (33+ characters)
   - `conversation_history`: Previous messages in the session
 
-## 🧠 Session Memory
+## 🧠 AgentCore Memory Architecture
 
-The system uses **AgentCore Runtime** for session management with **STM_AND_LTM** (Short-Term Memory + Long-Term Memory).
+The system uses **AgentCore Memory Service** with **STM_AND_LTM** mode for comprehensive memory management.
 
 ### Memory Types
 
 **STM (Short-Term Memory):**
-- Session-level conversation context
-- Cleared when session ends (15 min idle, 8 hours max)
-- Use case: Current conversation flow
+- **Scope**: Session-level conversation context
+- **Lifecycle**: Cleared when session ends (15 min idle timeout, 8 hours max lifetime)
+- **Storage**: Managed by AgentCore Runtime per `runtimeSessionId`
+- **Use Case**: Current conversation flow, immediate context
+- **Access**: Automatic via `conversation_history` in context
 
 **LTM (Long-Term Memory):**
-- Persistent user context across sessions
-- 30-day expiry
-- Use case: User preferences, past interactions
+- **Scope**: Persistent user context across sessions
+- **Lifecycle**: 30-day expiry (configurable via `event_expiry_days`)
+- **Storage**: Managed by AgentCore Memory Service, keyed by `user_id`
+- **Use Case**: User preferences, past interactions, cross-session continuity
+- **Access**: Automatic retrieval via `MemoryClient.get_last_k_turns()` and `retrieve_memories()`
+- **Memory ID**: `customer_support_supervisor_mem-SalHj92SVh`
+
+### Memory Flow
+
+```
+User Request (with user_id)
+    ↓
+AgentCore Runtime
+    ↓
+┌─────────────────────────────────────┐
+│ 1. Check STM (current session)      │
+│ 2. If not found, check LTM (user)  │
+│ 3. Inject memory into prompt        │
+│ 4. Agent processes with context     │
+│ 5. Store new info in STM + LTM      │
+└─────────────────────────────────────┘
+    ↓
+Response with context awareness
+```
+
+### Memory Implementation
+
+- **Automatic STM**: AgentCore Runtime manages STM per session automatically
+- **Explicit LTM Retrieval**: Supervisor Agent uses `MemoryClient` to fetch LTM when needed
+- **Cross-Session Persistence**: Same `user_id` across different `runtimeSessionId` values maintains LTM
 
 ### Testing Memory
 
@@ -417,9 +587,11 @@ curl -X POST http://localhost:8081/invocations \
   -d '{"prompt": "What is my name?", "session_id": "memory-test-001"}'
 ```
 
-## 📊 Monitoring
+## 📊 Monitoring & Observability
 
-### AgentCore Status
+### AgentCore Observability
+
+**Status**: Enabled in AgentCore Runtime configuration
 
 ```bash
 # Check agent status
@@ -432,12 +604,63 @@ agentcore logs
 agentcore dev --verbose
 ```
 
-### AWS Resources
+**Observability Features:**
+- **CloudWatch Logs**: Runtime logs, agent invocations, errors
+- **CloudWatch Metrics**: Invocation count, latency, success rate
+- **Distributed Tracing**: X-Ray integration for end-to-end tracing
+- **Health Checks**: Runtime health and agent availability
 
-- **CloudWatch**: Logs and metrics
-- **X-Ray**: Distributed tracing
-- **Lambda**: Function monitoring
-- **S3**: Storage metrics
+### AWS Resources Monitoring
+
+- **CloudWatch**: Logs and metrics for all services
+- **X-Ray**: Distributed tracing across Lambda, Gateway, Runtime
+- **Lambda**: Function monitoring (invocations, errors, duration)
+- **S3**: Storage metrics (bucket size, request counts)
+- **DynamoDB**: Table metrics (read/write capacity, throttling)
+- **Cognito**: Authentication metrics (sign-ins, token requests)
+
+## 🏗️ Complete Infrastructure Details
+
+### AgentCore Resources
+
+| Service | Resource | Configuration |
+|---------|----------|---------------|
+| **Runtime** | `customer_support_supervisor-GIa7fv2B6G` | Container, HTTP protocol, Public network |
+| **Memory** | `customer_support_supervisor_mem-SalHj92SVh` | STM_AND_LTM, 30-day expiry |
+| **Gateway** | `dev-customer-support-agentcore-gateway` | MCP protocol, Cognito JWT auth |
+| **Identity** | Cognito OAuth 2.0 | OAuth provider, JWT tokens |
+| **Observability** | CloudWatch | Logs, metrics, tracing enabled |
+
+### AWS Infrastructure
+
+| Service | Resource | Purpose |
+|---------|----------|---------|
+| **DynamoDB** | `dev-customer-support-tickets` | Ticket storage and management |
+| **DynamoDB** | `dev-customer-support-customers` | Customer profile data |
+| **DynamoDB** | `dev-customer-support-feedback` | Customer feedback storage |
+| **S3** | `dev-customer-support-knowledge-base` | Knowledge base articles |
+| **S3** | `dev-customer-support-vectors` | Vector embeddings storage |
+| **Lambda** | `sentiment_analysis` | Sentiment analysis via Comprehend |
+| **Lambda** | `knowledge_search` | S3 Vector search |
+| **Lambda** | `ticket_management` | Ticket CRUD operations (4 tools) |
+| **Lambda** | `knowledge_ingestion` | Knowledge base management |
+| **Cognito** | User Pool | OAuth 2.0 authentication |
+| **IAM** | Execution roles | Runtime and Lambda permissions |
+| **IAM** | Gateway role | Gateway Lambda invocation |
+| **SSM** | Parameter Store | Configuration and secrets |
+| **ECR** | Container registry | AgentCore Runtime images |
+
+### Gateway Tool Mapping
+
+| Lambda Function | Gateway Target | MCP Tool Name | Description |
+|----------------|----------------|---------------|-------------|
+| `sentiment_analysis` | `dev-cs-sentiment-analysis-target` | `___sent` | Analyze sentiment and emotion |
+| `knowledge_search` | `dev-cs-knowledge-search-target` | `___search` | Search knowledge base |
+| `knowledge_ingestion` | `dev-cs-knowledge-ingestion-target` | `___ingest` | Ingest articles |
+| `ticket_management` | `dev-cs-ticket-create-ticket-target` | `create_ticket` | Create support ticket |
+| `ticket_management` | `dev-cs-ticket-get-ticket-target` | `get_ticket` | Retrieve ticket by ID |
+| `ticket_management` | `dev-cs-ticket-update-ticket-target` | `update_ticket` | Update ticket status |
+| `ticket_management` | `dev-cs-ticket-list-tickets-target` | `list_tickets` | List tickets with filters |
 
 ## 🔒 Security Features
 
