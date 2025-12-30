@@ -1,12 +1,8 @@
-# Byte-compiled / optimized / DLL files
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
-
-# C extensions
 *.so
-
-# Distribution / packaging
 .Python
 build/
 develop-eggs/
@@ -26,54 +22,102 @@ share/python-wheels/
 *.egg
 MANIFEST
 
+# Virtual Environment
+venv/
+env/
+ENV/
+.venv/
+.env/
+
+# Environment Variables & Credentials
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+.env.*
+*.env
+# Allow example environment files
+!.env.example
+!.env.*.example
+!*.env.example
+credentials.json
+config.json
+secrets.json
+*.key
+*.pem
+*.p12
+*.pfx
+
+# AWS & Cloud Credentials
+.aws/
+aws-exports.js
+*.pem
+aws-credentials
+aws-config
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+terraform.tfvars
+*.tfplan
+
+# Terraform build artifacts
+infrastructure/**/lambda_packages/
+infrastructure/**/*.zip
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Node.js (for frontend components)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.yarn-integrity
+
+# Build outputs
+dist/
+build/
+*.zip
+
+# Testing
+.coverage
+.pytest_cache/
+.tox/
+htmlcov/
+
+# Local development
+local_data/
+temp/
+.cache/
+
 # PyInstaller
-#  Usually these files are written by a python script from a template
-#  before PyInstaller builds the exe, so as to inject date/other infos into it.
 *.manifest
 *.spec
-
-# Installer logs
-pip-log.txt
-pip-delete-this-directory.txt
-
-# Unit test / coverage reports
-htmlcov/
-.tox/
-.nox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.py,cover
-.hypothesis/
-.pytest_cache/
-cover/
-
-# Translations
-*.mo
-*.pot
-
-# Django stuff:
-*.log
-local_settings.py
-db.sqlite3
-db.sqlite3-journal
-
-# Flask stuff:
-instance/
-.webassets-cache
-
-# Scrapy stuff:
-.scrapy
-
-# Sphinx documentation
-docs/_build/
-
-# PyBuilder
-.pybuilder/
-target/
 
 # Jupyter Notebook
 .ipynb_checkpoints
@@ -82,100 +126,166 @@ target/
 profile_default/
 ipython_config.py
 
-# pyenv
-#   For a library or package, you might want to ignore these files since the code is
-#   intended to run in multiple environments; otherwise, check them in:
-# .python-version
-
-# pipenv
-#   According to pypa/pipenv#598, it is recommended to include Pipfile.lock in version control.
-#   However, in case of collaboration, if having platform-specific dependencies or dependencies
-#   having no cross-platform support, pipenv may install dependencies that don't work, or not
-#   install all needed dependencies.
-#Pipfile.lock
-
-# UV
-#   Similar to Pipfile.lock, it is generally recommended to include uv.lock in version control.
-#   This is especially recommended for binary packages to ensure reproducibility, and is more
-#   commonly ignored for libraries.
-#uv.lock
-
-# poetry
-#   Similar to Pipfile.lock, it is generally recommended to include poetry.lock in version control.
-#   This is especially recommended for binary packages to ensure reproducibility, and is more
-#   commonly ignored for libraries.
-#   https://python-poetry.org/docs/basic-usage/#commit-your-poetrylock-file-to-version-control
-#poetry.lock
-
-# pdm
-#   Similar to Pipfile.lock, it is generally recommended to include pdm.lock in version control.
-#pdm.lock
-#   pdm stores project-wide configurations in .pdm.toml, but it is recommended to not include it
-#   in version control.
-#   https://pdm.fming.dev/latest/usage/project/#working-with-version-control
-.pdm.toml
-.pdm-python
-.pdm-build/
-
-# PEP 582; used by e.g. github.com/David-OConnor/pyflow and github.com/pdm-project/pdm
-__pypackages__/
-
-# Celery stuff
-celerybeat-schedule
-celerybeat.pid
-
-# SageMath parsed files
-*.sage.py
-
-# Environments
-.env
-.venv
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
-
-# Spyder project settings
-.spyderproject
-.spyproject
-
-# Rope project settings
-.ropeproject
-
-# mkdocs documentation
-/site
-
-# mypy
-.mypy_cache/
-.dmypy.json
-dmypy.json
-
-# Pyre type checker
-.pyre/
-
-# pytype static type analyzer
-.pytype/
-
-# Cython debug symbols
-cython_debug/
-
-# PyCharm
-#  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
-#  be found at https://github.com/github/gitignore/blob/main/Global/JetBrains.gitignore
-#  and can be added to the global gitignore or merged into this file.  For a more nuclear
-#  option (not recommended) you can uncomment the following to ignore the entire idea folder.
-#.idea/
-
-# Ruff stuff:
+# Ruff stuff
 .ruff_cache/
 
 # PyPI configuration file
 .pypirc
 
-# Cursor  
-#  Cursor is an AI-powered code editor.`.cursorignore` specifies files/directories to 
-#  exclude from AI features like autocomplete and code analysis. Recommended for sensitive data
-#  refer to https://docs.cursor.com/context/ignore-files
+# Cursor AI Editor
 .cursorignore
 .cursorindexingignore
+
+# Additional Python tools
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.pytype/
+cython_debug/
+
+# Kiro IDE & AgentCore
+# Excludes Kiro IDE configuration and AgentCore deployment files
+.kiro/
+.bedrock_agentcore/
+.bedrock_agentcore.yaml
+.bedrock_agentcore.yml
+agentcore.yaml
+agentcore.yml
+*.agentcore.yaml
+*.agentcore.yml
+kiro-config.json
+.kiro-*
+
+# AgentCore Runtime & Session Data
+# Exclude runtime session data and state files
+*.runtime.json
+*.session.json
+runtime-state/
+session-data/
+
+# MCP & Gateway Configuration (if containing secrets)
+# Allow main config files, exclude local/secret variants
+mcp-gateway-config.local.json
+gateway-config.local.json
+*-config.local.json
+
+# Agent Runtime & Logs
+agent-logs/
+agent-runtime/
+.agent-cache/
+agent-state/
+*.agent.log
+
+# Backup & Temporary Files
+*.backup
+*.bak
+*.tmp
+*.temp
+*~
+.#*
+#*#
+.*.swp
+.*.swo
+
+# Database & Storage
+*.db
+*.sqlite
+*.sqlite3
+data/
+storage/
+uploads/
+
+# SSL/TLS Certificates
+*.crt
+*.cert
+*.ca-bundle
+*.p7b
+*.p7s
+*.der
+
+# Additional Security Files
+.secrets/
+secrets/
+private/
+confidential/
+*.secret
+*.private
+
+# AWS Specific - Sensitive Data
+# Exclude AWS credentials, ARNs, and account-specific data
+*.arn
+*_credentials.json
+*_config.json
+aws-account-id
+account-id.txt
+
+# Terraform Sensitive Files
+# Exclude terraform variable files with actual values
+terraform.tfvars
+*.tfvars
+!terraform.tfvars.example
+!*.tfvars.example
+
+# Lambda Package Build Artifacts
+# Exclude built Lambda packages (already covered, but explicit)
+infrastructure/**/lambda_packages/**/*.zip
+infrastructure/**/lambda_packages/**/__pycache__/
+infrastructure/**/lambda_packages/**/*.pyc
+
+# Python Cache & Build Artifacts (comprehensive)
+**/__pycache__/
+**/*.py[cod]
+**/*$py.class
+**/*.so
+**/.Python
+**/build/
+**/dist/
+**/*.egg-info/
+**/.eggs/
+
+# Environment & Configuration
+# Exclude all environment files except examples
+.env*
+!.env.example
+!.env.*.example
+config.local.*
+settings.local.*
+local_config.*
+
+# Logs & Temporary Files
+**/*.log
+**/*.log.*
+**/logs/
+**/tmp/
+**/temp/
+**/*.tmp
+**/*.temp
+**/*.backup
+**/*.bak
+
+# IDE & Editor Files
+**/.vscode/
+**/.idea/
+**/*.swp
+**/*.swo
+**/*~
+**/.DS_Store
+**/Thumbs.db
+
+# Test Coverage & Reports
+**/.coverage
+**/.pytest_cache/
+**/htmlcov/
+**/.tox/
+**/coverage.xml
+**/*.cover
+
+# Package Manager Files
+**/node_modules/
+**/.npm/
+**/.yarn/
+**/package-lock.json
+**/yarn.lock
+**/Pipfile.lock
+**/poetry.lock
