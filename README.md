@@ -2,6 +2,107 @@
 
 A production-ready, intelligent customer support system built with **Amazon Bedrock AgentCore** and **AWS Strands Agents**. The platform uses a sophisticated multi-agent architecture where specialized AI agents collaborate via the A2A (Agent-to-Agent) protocol to deliver personalized, context-aware customer support.
 
+## The Solution
+
+Instead of building another rigid support system, we created a team of AI specialists that work together like an expert customer support team:
+
+```mermaid
+graph TB
+    subgraph "Customer Interface"
+        UI[Customer Request<br/>UI / API / Direct Invocation]
+    end
+
+    subgraph "Amazon Bedrock AgentCore"
+        subgraph "AgentCore Runtime"
+            Supervisor[Supervisor Agent<br/>🧠 Memory: STM + LTM<br/>🔐 Identity: Cognito OAuth<br/>📊 Observability: CloudWatch]
+        end
+        
+        subgraph "AgentCore Gateway"
+            Gateway[MCP Gateway<br/>🌐 7 Tools<br/>🔐 Cognito JWT Auth]
+        end
+        
+        Memory[AgentCore Memory<br/>STM: Session Context<br/>LTM: 30-day Persistence]
+        Identity[AgentCore Identity<br/>Cognito OAuth 2.0]
+        Observability[AgentCore Observability<br/>CloudWatch Logs & Metrics]
+    end
+
+    subgraph "Specialized Agents (A2A Protocol)"
+        Sentiment[SentimentAgent<br/>Port 9001<br/>Emotion & Urgency Analysis]
+        Knowledge[KnowledgeAgent<br/>Port 9002<br/>S3 Vector Search]
+        Ticket[TicketAgent<br/>Port 9003<br/>Ticket Lifecycle]
+        Resolution[ResolutionAgent<br/>Port 9005<br/>Response Generation]
+        Escalation[EscalationAgent<br/>Port 9006<br/>Human Escalation]
+    end
+
+    subgraph "Lambda Functions (MCP Tools)"
+        Lambda1[sentiment_analysis<br/>Tool: ___sent<br/>Amazon Comprehend]
+        Lambda2[knowledge_search<br/>Tool: ___search<br/>S3 Vector Search]
+        Lambda3[ticket_management<br/>Tools: create_ticket<br/>get_ticket, update_ticket<br/>list_tickets]
+        Lambda4[knowledge_ingestion<br/>Tool: ___ingest<br/>Article Management]
+    end
+
+    subgraph "AWS Services"
+        DynamoDB[(DynamoDB<br/>Tickets, Customers<br/>Feedback)]
+        S3[(S3 Buckets<br/>Knowledge Base<br/>Vector Storage)]
+        Cognito[Cognito<br/>User Pool<br/>OAuth 2.0]
+        CloudWatch[CloudWatch<br/>Logs & Metrics<br/>Distributed Tracing]
+        SSM[SSM Parameter Store<br/>Configuration & Secrets]
+    end
+
+    UI -->|HTTP Request| Supervisor
+    Supervisor -->|A2A Protocol| Sentiment
+    Supervisor -->|A2A Protocol| Knowledge
+    Supervisor -->|A2A Protocol| Ticket
+    Supervisor -->|A2A Protocol| Resolution
+    Supervisor -->|A2A Protocol| Escalation
+    
+    Supervisor -.->|Memory Access| Memory
+    Supervisor -.->|Authentication| Identity
+    Supervisor -.->|Monitoring| Observability
+    
+    Sentiment -->|MCP Tool| Gateway
+    Knowledge -->|MCP Tool| Gateway
+    Ticket -->|MCP Tool| Gateway
+    Escalation -->|MCP Tool| Gateway
+    
+    Gateway -->|Invoke| Lambda1
+    Gateway -->|Invoke| Lambda2
+    Gateway -->|Invoke| Lambda3
+    Gateway -->|Invoke| Lambda4
+    
+    Lambda1 -->|Read/Write| DynamoDB
+    Lambda2 -->|Read| S3
+    Lambda3 -->|Read/Write| DynamoDB
+    Lambda4 -->|Read/Write| S3
+    
+    Gateway -.->|Auth| Cognito
+    Supervisor -.->|Auth| Cognito
+    
+    Lambda1 -.->|Logs| CloudWatch
+    Lambda2 -.->|Logs| CloudWatch
+    Lambda3 -.->|Logs| CloudWatch
+    Lambda4 -.->|Logs| CloudWatch
+    Supervisor -.->|Logs| CloudWatch
+    
+    Gateway -.->|Config| SSM
+    Supervisor -.->|Config| SSM
+
+    style Supervisor fill:#4A90E2,stroke:#2E5C8A,stroke-width:3px,color:#fff
+    style Gateway fill:#50C878,stroke:#2E7D4E,stroke-width:2px,color:#fff
+    style Memory fill:#FF6B6B,stroke:#C92A2A,stroke-width:2px,color:#fff
+    style Identity fill:#9B59B6,stroke:#6C3483,stroke-width:2px,color:#fff
+    style Observability fill:#F39C12,stroke:#B9770E,stroke-width:2px,color:#fff
+    style Sentiment fill:#FFD93D,stroke:#F4A261,stroke-width:2px
+    style Knowledge fill:#6BCF7F,stroke:#2D8659,stroke-width:2px
+    style Ticket fill:#FF8C42,stroke:#E76F51,stroke-width:2px
+    style Resolution fill:#E63946,stroke:#A61E1E,stroke-width:2px,color:#fff
+    style Escalation fill:#2B2D42,stroke:#1A1B2E,stroke-width:2px,color:#fff
+    style DynamoDB fill:#4051B5,stroke:#2E3A87,stroke-width:2px,color:#fff
+    style S3 fill:#569A31,stroke:#3D6B1F,stroke-width:2px,color:#fff
+    style Cognito fill:#FF9900,stroke:#CC7700,stroke-width:2px
+    style CloudWatch fill:#FF4F00,stroke:#CC3F00,stroke-width:2px,color:#fff
+```
+
 ## 🏗️ Architecture Overview
 
 ### Amazon Bedrock AgentCore Features
