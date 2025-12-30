@@ -1,0 +1,49 @@
+# Multi-Agent Customer Support Platform - Requirements
+# Install with: pip install -r requirements.txt
+
+# Core AgentCore dependencies
+bedrock-agentcore==1.1.1
+
+# Strands Agents for A2A protocol
+strands-agents
+strands-agents-tools
+strands-agents[a2a,litellm]
+
+# AWS SDK for Bedrock, Lambda, S3, Cognito
+boto3>=1.40.52
+botocore>=1.40.52
+
+# Core Python packages
+pydantic>=2.8.0,<3.0.0
+typing-extensions>=4.0.0
+
+# Environment management
+python-dotenv>=1.0.0
+
+# HTTP client for A2A communication
+httpx>=0.25.0,<1.0.0
+
+# JSON handling
+orjson>=3.8.0
+
+# Logging
+structlog>=23.0.0
+
+# Authentication
+python-jose[cryptography]>=3.3.0
+PyJWT>=2.8.0
+
+# MCP client for Lambda integration
+mcp
+
+# HTTP requests for authentication
+requests>=2.31.0
+
+# OpenTelemetry for AgentCore observability
+aws-opentelemetry-distro==0.12.2
+
+# UI Dependencies (Streamlit)
+streamlit>=1.28.0
+
+# JWT token decoding for UI
+cryptography>=41.0.0
