@@ -4,7 +4,7 @@ A production-ready, intelligent customer support system built with **Amazon Bedr
 
 ## The Solution
 
-Instead of building another rigid support system, we created a team of AI specialists that work together like an expert customer support team:
+Instead of building another rigid support system,  created a team of AI specialists that work together like an expert customer support team:
 
 ### Architecture Diagram
 
