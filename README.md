@@ -8,7 +8,6 @@ Instead of building another rigid support system,  created a team of AI speciali
 
 ### Architecture Diagram
 
-> **Note**: The Mermaid diagram below may not render in PR previews. View the README on GitHub or in a Mermaid-compatible viewer to see the full diagram. A text-based diagram is provided below for PR previews.
 
 ```mermaid
 graph TB
