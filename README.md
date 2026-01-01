@@ -1,5 +1,7 @@
 # Multi-Agent Customer Support Platform
 
+![Architecture Diagram](multi-agent-customer-support.png)
+
 A production-ready, intelligent customer support system built with **Amazon Bedrock AgentCore** and **AWS Strands Agents**. The platform uses a sophisticated multi-agent architecture where specialized AI agents collaborate via the A2A (Agent-to-Agent) protocol to deliver personalized, context-aware customer support.
 
 ## The Solution
