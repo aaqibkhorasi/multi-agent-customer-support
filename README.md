@@ -815,6 +815,8 @@ agentcore dev --verbose
 4. Test with deployment checklist
 5. Submit a pull request
 
+⭐ If you find this project useful or learn something from it, please consider starring the repository.
+
 ## 📄 License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
