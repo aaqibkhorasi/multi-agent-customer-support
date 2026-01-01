@@ -12,7 +12,7 @@ Instead of building another rigid support system,  created a team of AI speciali
 
 
 
-### Text-Based Architecture Diagram (PR-Friendly)
+### Text-Based Architecture Diagram
 
 For PR previews where Mermaid may not render, here's a text-based version:
 
